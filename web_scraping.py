@@ -8,6 +8,13 @@ from time import sleep
 import requests
 import locale
 from datetime import datetime
+import yfinance as yf
+import matplotlib.pyplot as plt
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.drawing.image import Image
+from openpyxl.utils import get_column_letter
 
 
 
@@ -20,40 +27,78 @@ def avancar_window(window):
     messagebox.showinfo('Mensagem', 'Arquivo Criado com Sucesso!')
 
 
+def processamento_empresa(empresa, caminho_arquivo):
+    empresa_str = str(empresa) + '.SA'
+    print(empresa_str)
+    cotacao = yf.download(empresa_str, start='2022-01-01', end='2023-01-01')
+
+    with pd.ExcelWriter(caminho_arquivo, engine='openpyxl') as writer:
+        writer.book = book
+        writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+        cotacao.to_excel(writer, sheet_name=empresa, index=True)
+
+        cotacao['Adj Close'].plot(figsize=(15, 10))
+        plt.title(empresa)
+        img_path = f'{empresa}.png'
+        plt.savefig(img_path)
+        plt.close()
+
+        sheet = writer.sheets[empresa]
+        img = Image(img_path)
+        sheet.add_image(img, f'{get_column_letter(cotacao.shape[1] + 3)}1')
+
+
+def handle_advance_button_analise(window, checkbox1_var, checkbox2_var):
+    if checkbox1_var.get() or checkbox2_var.get():
+        caminho_arquivo = rf'C:\Users\{user}\Downloads\Empresas.xlsx'
+
+        for empresa in tabela_empresas['Empresas']:
+            processamento_empresa(empresa, caminho_arquivo)
+
+        if checkbox1_var.get():
+            os.startfile(caminho_arquivo)
+
+    messagebox.showinfo('Sucesso', 'Análise de mercado realizada com sucesso!')
+    close_current_window()
+
+
 def open_analise_window():
     global current_window
-
-    # Verifica se já existe uma janela secundária aberta e fecha-a
     if current_window:
         current_window.destroy()
-
-    # Criando janela secundária para Análise de Mercado
     current_window = tk.Toplevel(janela)
     current_window.title('Análise de Mercado')
     current_window.geometry('300x250')
 
-    # Adicionando orientação ao usuário
     orientacao_label = tk.Label(current_window, text='Selecione as opções desejadas:')
     orientacao_label.pack(pady=10)
 
-    # Adicionando caixas de seleção
-    checkbox1 = tk.Checkbutton(current_window, text='Apenas realizar download localmente.')
+    checkbox1_var = tk.BooleanVar(value=False)
+    checkbox2_var = tk.BooleanVar(value=False)
+
+    def on_checkbox1_change():
+        if checkbox1_var.get():
+            checkbox2_var.set(False)
+
+    def on_checkbox2_change():
+        if checkbox2_var.get():
+            checkbox1_var.set(False)
+
+    checkbox1 = tk.Checkbutton(current_window, text='Realizar download e visualizar arquivo', variable=checkbox1_var, command=on_checkbox1_change)
     checkbox1.pack()
 
-    checkbox2 = tk.Checkbutton(current_window, text='Realizar download e vizualizar arquivo.')
+    checkbox2 = tk.Checkbutton(current_window, text='Apenas realizar download localmente', variable=checkbox2_var, command=on_checkbox2_change)
     checkbox2.pack()
 
-    # Criando um Frame para os botões de navegação
     button_frame = tk.Frame(current_window)
     button_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
 
-    # Botão de Retroceder
     retroceder_button = tk.Button(button_frame, text='Retroceder para Principal', command=close_current_window)
     retroceder_button.pack(side=tk.LEFT)
 
-    # Botão de Avançar (simétrico à direita)
-    avancar_button = tk.Button(button_frame, text='Avançar', command=lambda: avancar_window(current_window))
+    avancar_button = tk.Button(button_frame, text='Avançar', command=lambda: handle_advance_button_analise(current_window, checkbox1_var, checkbox2_var))
     avancar_button.pack(side=tk.RIGHT)
+
 
 
 def open_precos_window():
