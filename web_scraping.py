@@ -16,7 +16,8 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.drawing.image import Image
 from openpyxl.utils import get_column_letter
 
-
+# Variável global para definição de usuário
+user = os.getlogin()
 
 # Variável global para rastrear a janela atual
 current_window = None
@@ -138,9 +139,6 @@ def log_cot():
     
     # Definindo o local para o formato de moeda
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
-    # Definindo usuário
-    user = os.getlogin()
 
     # Verifica se o arquivo existe
     if not os.path.isfile(r'C:\Users\{}\Downloads\Cotações.xlsx'.format(user)):
