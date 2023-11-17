@@ -118,6 +118,17 @@ def open_analise_window():
     avancar_button = tk.Button(button_frame, text='Avançar', command=lambda: handle_advance_button_analise(current_window, checkbox1_var, checkbox2_var))
     avancar_button.pack(side=tk.RIGHT)
 
+    # Verifica se o diretório existe, se não existir, cria
+    download_dir = rf'C:\Users\{user}\Downloads'
+    if not os.path.exists(download_dir):
+        os.makedirs(download_dir)
+
+    # Verifica se o arquivo 'Empresas.xlsx' existe, se não existir, cria um arquivo vazio
+    empresas_xlsx_path = os.path.join(download_dir, 'Empresas.xlsx')
+    if not os.path.exists(empresas_xlsx_path):
+        with pd.ExcelWriter(empresas_xlsx_path, engine='openpyxl') as writer:
+            pd.DataFrame(columns=['Empresas']).to_excel(writer, sheet_name='Empresas', index=False)
+
 def log_cot():
     # Definindo o local para o formato de moeda
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
